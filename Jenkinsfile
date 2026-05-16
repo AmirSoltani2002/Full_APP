@@ -22,7 +22,7 @@ pipeline{
         }
         stage('Build') {
             steps {
-                sh "eval $(minikube docker-env -u)"
+                sh 'eval $(minikube docker-env -u)'
                 sh "docker build . -t ${app_name}:${VERSION}"   
                 sh "docker tag ${app_name}:${VERSION} ${dockerTag}:${VERSION}"    
             }   
