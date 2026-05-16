@@ -10,6 +10,7 @@ pipeline{
         string(name: 'awsurl', defaultValue: 'http://localstack-localstack-1:4566', description: 'AWS CLI download URL')
         string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
         string(name: 'awsuser', defaultValue: 'AWS', description: 'AWS Access Key ID')
+        string(name: 'reponame', defaultValue: 'myapp-repo', description: 'ECR Repository Name')
         string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.eu-north-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
         string(name: 'K8S_SERVER_URL', defaultValue: 'http://minikube:8443', description: 'Kubernetes API Server URL')
     }
@@ -42,7 +43,11 @@ pipeline{
         stage('Deploy to Kubernetes') {
             steps {
                 kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
-                    sh "helm upgrade --install ${app_name} ./helm/${app_name} --set image.repository=${dockerTag},image.tag=${VERSION} --namespace ${ENV} --create-namespace"
+                    sh "helm upgrade --install ${app_name} ./helm/${app_name} \
+                    --set image.pullPolicy=Always,\
+                    image.repository=${awsurl}/${reponame},\
+                    image.tag=${VERSION} \  
+                    --namespace ${ENV} --create-namespace"
                 }
             }
         }
