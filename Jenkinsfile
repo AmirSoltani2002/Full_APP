@@ -7,7 +7,7 @@ pipeline{
         string(name: 'awsurl', defaultValue: 'http://localstack-localstack-1:4566', description: 'AWS CLI download URL')
         string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
         string(name: 'awsuser', defaultValue: 'AWS', description: 'AWS Access Key ID')
-        string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.eu-north-1.localstack-localstack-1.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
+        string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.eu-north-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
     }
     tools {
         nodejs 'nodejs'
@@ -30,7 +30,7 @@ pipeline{
         stage('Deploy') {
             steps {
                 withAWS(endpointUrl: "${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
-                sh "aws ecr get-login-password --region ${awsregion} | docker login --username ${awsuser} --password-stdin ${dockerTag}"
+                sh "aws ecr get-login-password | docker login --username ${awsuser} --password-stdin ${dockerTag}"
                 sh "docker push ${dockerTag}:${VERSION}"
             }
             }
