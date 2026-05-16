@@ -8,6 +8,7 @@ pipeline{
         string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
         string(name: 'awsuser', defaultValue: 'AWS', description: 'AWS Access Key ID')
         string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.eu-north-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
+        string(name: 'K8S_SERVER_URL', defaultValue: 'http://minikube:8443', description: 'Kubernetes API Server URL')
     }
     tools {
         nodejs 'nodejs'
@@ -37,7 +38,7 @@ pipeline{
         }
         stage('Deploy to Kubernetes') {
             steps {
-                kubeconfig(serverUrl: 'minikube:8443') {
+                kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}") {
                     sh "helm upgrade --install ${app_name} ./${app_name} --set image.repository=${dockerTag},image.tag=${VERSION} --namespace ${ENV} --create-namespace"
                 }
             }
