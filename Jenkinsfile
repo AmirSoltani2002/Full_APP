@@ -28,9 +28,11 @@ pipeline{
             }   
         }
         stage('Deploy') {
-            withAWS(endpointUrl: "${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
+            steps {
+                withAWS(endpointUrl: "${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
                 sh "aws ecr get-login-password --region ${awsregion} | docker login --username ${awsuser} --password-stdin ${dockerTag}"
                 sh "docker push ${dockerTag}:${VERSION}"
+            }
             }
         }
     }
