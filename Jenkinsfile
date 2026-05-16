@@ -2,7 +2,7 @@ pipeline{
     agent any
     parameters {
         string(name: 'ENV', defaultValue: 'dev', description: 'Environment to deploy to')
-        string(name: 'VERSION', defaultValue: 'latest', description: 'Version of the application')
+        string(name: 'VERSION', defaultValue: "1.${BUILD_NUMBER}.0", description: 'Version of the application')
         string(name: 'app_name', defaultValue: 'myapp', description: 'Name of the application')
         string(name: 'awsurl', defaultValue: 'http://localstack-localstack-1:4566', description: 'AWS CLI download URL')
         string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
