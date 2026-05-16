@@ -8,10 +8,10 @@ pipeline{
         string(name: 'VERSION', defaultValue: "1.${BUILD_NUMBER}.0", description: 'Version of the application')
         string(name: 'app_name', defaultValue: 'myapp', description: 'Name of the application')
         string(name: 'awsurl', defaultValue: 'localstack-localstack-1:4566', description: 'AWS CLI download URL')
-        string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
+        string(name: 'awsregion', defaultValue: 'us-east-1', description: 'AWS Region')
         string(name: 'awsuser', defaultValue: 'AWS', description: 'AWS Access Key ID')
         string(name: 'reponame', defaultValue: 'myapp-repo', description: 'ECR Repository Name')
-        string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.eu-north-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
+        string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.us-east-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
         string(name: 'K8S_SERVER_URL', defaultValue: 'http://minikube:8443', description: 'Kubernetes API Server URL')
     }
     tools {
