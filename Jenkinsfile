@@ -46,8 +46,7 @@ pipeline{
                     sh "helm upgrade --install ${app_name} ./helm/${app_name} \
                     --set image.pullPolicy=Always,\
                     image.repository=${awsurl}/${reponame},\
-                    image.tag=${VERSION} \  
-                    --namespace ${ENV} --create-namespace"
+                    image.tag=${VERSION} --namespace ${ENV} --create-namespace"
                 }
             }
         }
