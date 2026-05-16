@@ -11,7 +11,7 @@ pipeline{
     }
     tools {
         nodejs 'nodejs'
-        Docker 'dockerTool'
+        // Docker 'dockerTool'
     }
     stages {
         stage('Install Dependencies') {
