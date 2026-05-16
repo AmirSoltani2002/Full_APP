@@ -4,7 +4,7 @@ pipeline{
         string(name: 'ENV', defaultValue: 'dev', description: 'Environment to deploy to')
         string(name: 'VERSION', defaultValue: 'latest', description: 'Version of the application')
         string(name: 'app_name', defaultValue: 'myapp', description: 'Name of the application')
-        string(name: 'awsurl', defaultValue: 'http://localhost:4566', description: 'AWS CLI download URL')
+        string(name: 'awsurl', defaultValue: 'http://localstack-localstack-1:4566', description: 'AWS CLI download URL')
         string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
         string(name: 'awsuser', defaultValue: 'AWS', description: 'AWS Access Key ID')
         string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.eu-north-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
