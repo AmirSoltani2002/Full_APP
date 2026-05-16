@@ -38,7 +38,7 @@ pipeline{
         }
         stage('Deploy to Kubernetes') {
             steps {
-                kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}") {
+                kubeconfig(credentialsId: 'k8s_config') {
                     sh "helm upgrade --install ${app_name} ./${app_name} --set image.repository=${dockerTag},image.tag=${VERSION} --namespace ${ENV} --create-namespace"
                 }
             }
