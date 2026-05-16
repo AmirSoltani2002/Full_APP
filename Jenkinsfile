@@ -7,7 +7,7 @@ pipeline{
         string(name: 'ENV', defaultValue: 'default', description: 'Environment to deploy to')
         string(name: 'VERSION', defaultValue: "1.${BUILD_NUMBER}.0", description: 'Version of the application')
         string(name: 'app_name', defaultValue: 'myapp', description: 'Name of the application')
-        string(name: 'awsurl', defaultValue: 'http://localstack-localstack-1:4566', description: 'AWS CLI download URL')
+        string(name: 'awsurl', defaultValue: 'localstack-localstack-1:4566', description: 'AWS CLI download URL')
         string(name: 'awsregion', defaultValue: 'eu-north-1', description: 'AWS Region')
         string(name: 'awsuser', defaultValue: 'AWS', description: 'AWS Access Key ID')
         string(name: 'reponame', defaultValue: 'myapp-repo', description: 'ECR Repository Name')
@@ -34,7 +34,7 @@ pipeline{
         }
         stage('Deploy to ECR') {
             steps {
-                withAWS(endpointUrl: "${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
+                withAWS(endpointUrl: "http://${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
                 sh "aws ecr get-login-password | docker login --username ${awsuser} --password-stdin ${dockerTag}"
                 sh "docker push ${dockerTag}:${VERSION}"
             }
