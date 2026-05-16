@@ -27,12 +27,19 @@ pipeline{
                 sh "docker tag ${app_name}:${VERSION} ${dockerTag}:${VERSION}"    
             }   
         }
-        stage('Deploy') {
+        stage('Deploy to ECR') {
             steps {
                 withAWS(endpointUrl: "${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
                 sh "aws ecr get-login-password | docker login --username ${awsuser} --password-stdin ${dockerTag}"
                 sh "docker push ${dockerTag}:${VERSION}"
             }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                kubeconfig(serverUrl: '') {
+                    sh "helm upgrade --install ${app_name} ./${app_name} --set image.repository=${dockerTag},image.tag=${VERSION} --namespace ${ENV} --create-namespace"
+                }
             }
         }
     }
