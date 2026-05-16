@@ -43,10 +43,7 @@ pipeline{
         stage('Deploy to Kubernetes') {
             steps {
                 kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
-                    sh "helm upgrade --install ${app_name} ./helm/${app_name} \
-                    --set image.pullPolicy=Always,\
-                    image.repository=${awsurl}/${reponame},\
-                    image.tag=${VERSION} --namespace ${ENV} --create-namespace"
+                    sh "helm upgrade --install ${app_name} ./helm/${app_name} --set image.pullPolicy=Always,image.repository=${awsurl}/${reponame},image.tag=${VERSION} --namespace ${ENV} --create-namespace"
                 }
             }
         }
