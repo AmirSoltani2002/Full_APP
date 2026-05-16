@@ -8,6 +8,28 @@ const con = mysql.createConnection({
     database: process.env.DB_DATABASE || dbcreds.DB_DATABASE
 });
 
+function createTransactionsTable() {
+
+    const sql = `
+    CREATE TABLE IF NOT EXISTS transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        amount DECIMAL(10,2) NOT NULL,
+        description VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    `;
+
+    con.query(sql, function(err, result) {
+
+        if (err) {
+            console.error("Error creating table:", err);
+            return;
+        }
+
+        console.log("Transactions table created or already exists");
+    });
+}
+
 function addTransaction(amount,desc){
     var mysql = `INSERT INTO \`transactions\` (\`amount\`, \`description\`) VALUES ('${amount}','${desc}')`;
     con.query(mysql, function(err,result){
@@ -58,6 +80,7 @@ module.exports = {
     getAllTransactions,
     findTransactionById,
     deleteAllTransactions,
-    deleteTransactionById
+    deleteTransactionById,
+    createTransactionsTable
 };
 
