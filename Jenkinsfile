@@ -1,8 +1,5 @@
 pipeline{
     agent any
-    environment {
-        caCertificate_kube = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURJVENDQWdtZ0F3SUJBZ0lCQWpBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRJMk1EVXhOVEUwTVRrME9Wb1hEVEk1TURVeE5URTBNVGswT1Zvd01URVhNQlVHQTFVRQpDaE1PYzNsemRHVnRPbTFoYzNSbGNuTXhGakFVQmdOVkJBTVREVzFwYm1scmRXSmxMWFZ6WlhJd2dnRWlNQTBHCkNTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFETDArbkpERGNMUW9yeTQ5eGw5MXpSUFN3SW9hbTgKZi9lNVZwbmhZVUM0ZTYva3lOZmkwYWIrRElGYXpySytOb1BIWTRVaWFJMCs5d3VRUDBGZEtVYUxDYnFKLzJndQp6dEVOOUlHbmtndjFQdEhSV2g4MlB4aHVRTUNKVVlzb2FxeXR3Z21YUDQ0NUY4RUh2ZG5JM1hVMDZWYzNlYVo4CjlEWitTdnFlaFExYXNGYkt6NittL3l2ZHRuYWFOWUJuaFhrM3k1ciswNXFDelZTL0VWcEt2S3Y1VDh5UWplZWUKSW9qQW1RWk5WNC9POEl4UCs5RnV0T1hZT0JSMHFpalVHcDZobi8zRHNCY1AvZWFJMkdCTzZ1VnhjdVJlU1JmUwpqaXYxaWVCY3ZyQk00ODFQYjBkYm5zRGp2a1NWOU1GNUZrR29qMmNKYXRpRXcxNll2bkZDa3JQWkFnTUJBQUdqCllEQmVNQTRHQTFVZER3RUIvd1FFQXdJRm9EQWRCZ05WSFNVRUZqQVVCZ2dyQmdFRkJRY0RBUVlJS3dZQkJRVUgKQXdJd0RBWURWUjBUQVFIL0JBSXdBREFmQmdOVkhTTUVHREFXZ0JUOVZiODNTS1FlT3hDK0pMbXdxK2hkZkNtZgprekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBYWdtWnRtRFA1S0JXcXhGVkVGdVVxUHdoaFlsYlBjYTF3dE5iCkhzUlUyby9ES05kTVAzUlVNVk9KRmxnejZoREU0UjhKbmVCbDc3aFRIRS9VdnM4UjBiaTRQTno3WksrOFc0NlEKYklGWTEyeElzT0MxUkViTFRTQW9vdmFaLzdFbUJQSkFFa3hLelpTeTFKM3NIbWo1RDZlWnlUK1BXWkN5eVhuWQpRZHRpOFUxVWlHRTNVYzBTMWEyY2dDQUUvS3pKeGJqL3czc0Y3cXBhMkdEU2wvSjhxUXlWajhLb0JJaUkwY2lOCkNsVGo2Ykhqc2lkYThLL01DTUJGcDBJaHh2aDNMUXo4RDlGUU1EZFhrQVppd2U0eVdQVjdOSEpuVTJNbjkxTDMKaEtKNWl3WHBWdnp3SW9qUnpvdDBZYXdWS0J2dEJTbTVlbmFxaEJUMU1YZ0FwZXBPb3c9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
-    }
     parameters {
         string(name: 'ENV', defaultValue: 'default', description: 'Environment to deploy to')
         string(name: 'VERSION', defaultValue: "1.${BUILD_NUMBER}.0", description: 'Version of the application')
@@ -67,12 +64,51 @@ pipeline{
                 ENV = "${params.ENV}"
             }
             steps {
-                kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
-                    withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
-                        sh 'helm upgrade --install $app_name ./helm/$app_name --set image.pullPolicy=Always,image.repository=$dockerTag,image.tag=$VERSION,env.DB_HOST=$DB_HOST,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE --namespace $ENV --create-namespace'
+                withCredentials([file(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
+                    kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
+                        withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
+                            sh 'helm upgrade --install $app_name ./helm/$app_name --set image.pullPolicy=Always,image.repository=$dockerTag,image.tag=$VERSION,env.DB_HOST=$DB_HOST,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE --namespace $ENV --create-namespace'
+                        }
                     }
                 }
             }
         }
+        stage('Verify Pod Status') {
+    environment {
+        // Define your variables here or pull them from parameters
+        APP_NAME  = "${params.app_name}"
+        NAMESPACE = "${params.ENV}"
+    }
+    steps {
+        // Use single quotes to pass variables safely to the shell environment
+        sh '''
+            echo "Checking deployment rollout status..."
+            # 1. Check if the deployment rollout succeeded
+            if kubectl rollout status deployment/$APP_NAME --namespace $NAMESPACE --timeout=120s; then
+                echo "ERROR: Deployment rollout failed or timed out."
+                exit 1
+            fi
+
+            echo "Verifying individual pod phases..."
+            # 2. Additional safety check: Ensure no pods are in a CrashLoopBackOff or Failed state
+            POD_STATUSES=$(kubectl get pods -n $NAMESPACE -l app=$APP_NAME -o jsonpath='{.items[*].status.phase}')
+            
+            echo "Current pod phases: $POD_STATUSES"
+            
+            if echo "$POD_STATUSES" | grep -E -q "Failed|Unknown"; then
+                echo "ERROR: One or more pods are in a Failed or Unknown state."
+                kubectl get pods -n $NAMESPACE -l app=$APP_NAME
+                kubectl logs -n $NAMESPACE" deployment/$APP_NAME" --tail=50
+                exit 1
+            fi
+
+            # 3. Check for container-level restart loops (CrashLoopBackOff)
+            RESTARTS=$(kubectl get pods -n $NAMESPACE -l app=$APP_NAME -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
+            echo "Pod container restart counts: $RESTARTS"
+            
+            echo "SUCCESS: All pods are running correctly!"
+        '''
+    }
+}
     }
 }
