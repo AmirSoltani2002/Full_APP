@@ -1,6 +1,6 @@
-CREATE DATABASE transactions;
+CREATE DATABASE mydb;
 
-\c transactions;
+\c mydb;
 
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
