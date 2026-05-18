@@ -28,7 +28,7 @@ pipeline{
             }
         }
         stage('Build') {
-            environmnt {
+            environment {
                 app_name = "${params.app_name}"
                 VERSION = "${params.VERSION}"
                 dockerTag = "${params.dockerTag}"
