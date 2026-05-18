@@ -29,7 +29,7 @@ pipeline{
         }
         stage('Build') {
             steps {
-                withCredentials([string(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
+                withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
                     sh 'eval $(minikube docker-env -u)'
                     sh "export DB_HOST=${DB_HOST}"
                     sh "export DB_USER=${DB_USER}"
@@ -51,7 +51,7 @@ pipeline{
         stage('Deploy to Kubernetes') {
             steps {
                 kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
-                    sh "helm upgrade --install ${app_name} ./helm/${app_name} --set image.pullPolicy=Always,image.repository=${dockerTag},image.tag=${VERSION} --namespace ${ENV} --create-namespace"
+                    sh "helm upgrade --install ${app_name} ./helm/${app_name} --set image.pullPolicy=Always,image.repository=${dockerTag},image.tag=${VERSION},env.DB_HOST=${DB_HOST},env.DB_USER=${DB_USER},env.DB_PWD=${DB_PWD},env.DB_DATABASE=${DB_DATABASE} --namespace ${ENV} --create-namespace"
                 }
             }
         }
