@@ -88,10 +88,9 @@ pipeline{
                     kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: caCertificate_kube) {
                         withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
                             sh '''
-                                export DB_HOST_TMP=$(echo $DB_HOST_env | cut -d: -f1)
-                                export DB_HOST_env=$DB_HOST_TMP:$DB_PORT_env
+                                export DB_HOST_env=$(echo $DB_HOST_env | cut -d: -f1)
                                 helm dependency update ./helm/$app_name_env
-                                helm upgrade --install $app_name_env ./helm/$app_name_env --set image.pullPolicy=Always,image.repository=$dockerTag_env,image.tag=$VERSION_env,env.DB_HOST=$DB_HOST_env,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE_env --namespace $ENV_env --create-namespace
+                                helm upgrade --install $app_name_env ./helm/$app_name_env --set image.pullPolicy=Always,image.repository=$dockerTag_env,image.tag=$VERSION_env,env.DB_HOST=$DB_HOST_env,env.DB_PORT=$DB_PORT_env,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE_env --namespace $ENV_env --create-namespace
                             '''
                         }
                     }

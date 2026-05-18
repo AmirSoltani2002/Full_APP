@@ -1,7 +1,7 @@
 FROM node:20.15.0-alpine3.20
 
 EXPOSE 8080
-ENV DB_HOST=localhost.localstack.cloud:4566
+# ENV DB_HOST=localhost.localstack.cloud:4566
 RUN addgroup -S expense && adduser -S expense -G expense \
     && mkdir /opt/server \
     && chown expense:expense -R /opt/server
