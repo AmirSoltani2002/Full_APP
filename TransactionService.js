@@ -1,78 +1,58 @@
 const dbcreds = require('./DbConfig');
-const mysql = require('mysql2'); // Change to mysql2
+const { Pool } = require('pg');
 
-const con = mysql.createConnection({
+const con = new Pool({
     host: process.env.DB_HOST || dbcreds.DB_HOST,
     user: process.env.DB_USER || dbcreds.DB_USER,
     password: process.env.DB_PWD || dbcreds.DB_PWD,
-    database: process.env.DB_DATABASE || dbcreds.DB_DATABASE
+    database: process.env.DB_DATABASE || dbcreds.DB_DATABASE,
+    port: process.env.DB_PORT || 5432 
 });
 
-function createTransactionsTable() {
-
-    const sql = `
-    CREATE TABLE IF NOT EXISTS transactions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        amount DECIMAL(10,2) NOT NULL,
-        description VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    `;
-
-    con.query(sql, function(err, result) {
-
+function addTransaction(amount, desc) {
+    // 1. Removed backticks. 2. Used $1, $2 for parameters.
+    const sql = `INSERT INTO transactions (amount, description) VALUES ($1, $2)`;
+    con.query(sql, [amount, desc], function(err, result) {
         if (err) {
-            console.error("Error creating table:", err);
+            console.error("Error adding transaction:", err);
             return;
         }
-
-        console.log("Transactions table created or already exists");
-    });
-}
-
-function addTransaction(amount,desc){
-    var mysql = `INSERT INTO \`transactions\` (\`amount\`, \`description\`) VALUES ('${amount}','${desc}')`;
-    con.query(mysql, function(err,result){
-        if (err) throw err;
-        //console.log("Adding to the table should have worked");
-    }) 
+    }); 
     return 200;
 }
 
-function getAllTransactions(callback){
-    var mysql = "SELECT * FROM transactions";
-    con.query(mysql, function(err,result){
+function getAllTransactions(callback) {
+    const sql = "SELECT * FROM transactions";
+    con.query(sql, function(err, result) {
         if (err) throw err;
-        //console.log("Getting all transactions...");
-        return(callback(result));
+        // 3. IMPORTANT: Use result.rows for PostgreSQL
+        return callback(result.rows);
     });
 }
 
-function findTransactionById(id,callback){
-    var mysql = `SELECT * FROM transactions WHERE id = ${id}`;
-    con.query(mysql, function(err,result){
+function findTransactionById(id, callback) {
+    const sql = `SELECT * FROM transactions WHERE id = $1`;
+    con.query(sql, [id], function(err, result) {
         if (err) throw err;
-        console.log(`retrieving transactions with id ${id}`);
-        return(callback(result));
-    }) 
+        // 3. Return only the first row found
+        return callback(result.rows[0]);
+    }); 
 }
 
-function deleteAllTransactions(callback){
-    var mysql = "DELETE FROM transactions";
-    con.query(mysql, function(err,result){
+function deleteAllTransactions(callback) {
+    const sql = "DELETE FROM transactions";
+    con.query(sql, function(err, result) {
         if (err) throw err;
-        //console.log("Deleting all transactions...");
-        return(callback(result));
-    }) 
+        return callback(result);
+    }); 
 }
 
-function deleteTransactionById(id, callback){
-    var mysql = `DELETE FROM transactions WHERE id = ${id}`;
-    con.query(mysql, function(err,result){
+function deleteTransactionById(id, callback) {
+    const sql = `DELETE FROM transactions WHERE id = $1`;
+    con.query(sql, [id], function(err, result) {
         if (err) throw err;
-        console.log(`Deleting transactions with id ${id}`);
-        return(callback(result));
-    }) 
+        return callback(result);
+    }); 
 }
 
 module.exports = {
@@ -80,7 +60,5 @@ module.exports = {
     getAllTransactions,
     findTransactionById,
     deleteAllTransactions,
-    deleteTransactionById,
-    createTransactionsTable
+    deleteTransactionById
 };
-
