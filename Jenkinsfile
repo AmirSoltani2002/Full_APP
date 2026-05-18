@@ -85,7 +85,7 @@ pipeline{
             }
             steps {
                 withCredentials([string(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
-                    kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
+                    kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: caCertificate_kube) {
                         withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
                             sh 'export DB_HOST_TMP=$(echo $DB_HOST_env | cut -d: -f1)'
                             sh 'export DB_HOST_env=$DB_HOST_TMP:$DB_PORT_env'
