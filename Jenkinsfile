@@ -63,10 +63,10 @@ pipeline{
             steps {
                 withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'PGPASSWORD')]) {
                    sh '''
-                            DB_HOST=$(echo $DB_HOST_env | cut -d: -f1)
+                            export DB_HOST_TMP2=$(echo $DB_HOST_env | cut -d: -f1)
                             for file in ./schema/*.sql; do
                                 echo 'Executing ${file}...'
-                                psql -h $DB_HOST -p $DB_PORT_env -U $DB_USER -d $DB_DATABASE_env -f "$file"
+                                psql -h $DB_HOST_TMP2 -p $DB_PORT_env -U $DB_USER -d $DB_DATABASE_env -f "$file"
                             done
                         '''
                 }
@@ -87,10 +87,12 @@ pipeline{
                 withCredentials([string(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
                     kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: caCertificate_kube) {
                         withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
-                            sh 'export DB_HOST_TMP=$(echo $DB_HOST_env | cut -d: -f1)'
-                            sh 'export DB_HOST_env=$DB_HOST_TMP:$DB_PORT_env'
-                            sh 'helm dependency update ./helm/$app_name_env'
-                            sh 'helm upgrade --install $app_name_env ./helm/$app_name_env --set image.pullPolicy=Always,image.repository=$dockerTag_env,image.tag=$VERSION_env,env.DB_HOST=$DB_HOST_env,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE_env --namespace $ENV_env --create-namespace'
+                            sh '''
+                                export DB_HOST_TMP=$(echo $DB_HOST_env | cut -d: -f1)
+                                export DB_HOST_env=$DB_HOST_TMP:$DB_PORT_env
+                                helm dependency update ./helm/$app_name_env
+                                helm upgrade --install $app_name_env ./helm/$app_name_env --set image.pullPolicy=Always,image.repository=$dockerTag_env,image.tag=$VERSION_env,env.DB_HOST=$DB_HOST_env,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE_env --namespace $ENV_env --create-namespace
+                            '''
                         }
                     }
                 }
