@@ -1,13 +1,9 @@
-CREATE DATABASE IF NOT EXISTS transactions;
-USE transactions;
+CREATE DATABASE transactions;
+
+\c transactions;
 
 CREATE TABLE IF NOT EXISTS transactions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     amount INT,
     description VARCHAR(255)
 );
-
-CREATE USER IF NOT EXISTS 'expense'@'%' IDENTIFIED BY 'ExpenseApp@1';
-GRANT ALL ON transactions.* TO 'expense'@'%';
-FLUSH PRIVILEGES;
-
