@@ -16,6 +16,7 @@
     "express": "^4.17.1",
     "moment": "latest",
     "mysql2": "latest",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "pg": "^8.21.0"
   }
 }
