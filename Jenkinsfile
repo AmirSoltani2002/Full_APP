@@ -13,6 +13,8 @@ pipeline{
         string(name: 'reponame', defaultValue: 'myapp-repo', description: 'ECR Repository Name')
         string(name: 'dockerTag', defaultValue: '000000000000.dkr.ecr.us-east-1.localhost.localstack.cloud:4566/myapp-repo', description: 'Docker tag')
         string(name: 'K8S_SERVER_URL', defaultValue: 'http://minikube:8443', description: 'Kubernetes API Server URL')
+        string(name: 'DB_HOST', defaultValue: 'localhost.localstack.cloud:4566', description: 'Database Host')
+        string(name: 'DB_DATABASE', defaultValue: 'mydb', description: 'Database Name')
     }
     tools {
         nodejs 'nodejs'
@@ -27,9 +29,15 @@ pipeline{
         }
         stage('Build') {
             steps {
-                sh 'eval $(minikube docker-env -u)'
-                sh "docker build . -t ${app_name}:${VERSION}"   
-                sh "docker tag ${app_name}:${VERSION} ${dockerTag}:${VERSION}"    
+                withCredentials([string(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
+                    sh 'eval $(minikube docker-env -u)'
+                    sh "export DB_HOST=${DB_HOST}"
+                    sh "export DB_USER=${DB_USER}"
+                    sh "export DB_PWD=${DB_PWD}"
+                    sh "export DB_DATABASE=${DB_DATABASE}"
+                    sh "docker build . -t ${app_name}:${VERSION}"   
+                    sh "docker tag ${app_name}:${VERSION} ${dockerTag}:${VERSION}"  
+                }  
             }   
         }
         stage('Deploy to ECR') {
