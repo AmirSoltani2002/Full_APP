@@ -28,31 +28,48 @@ pipeline{
             }
         }
         stage('Build') {
+            environmnt {
+                app_name = "${params.app_name}"
+                VERSION = "${params.VERSION}"
+                dockerTag = "${params.dockerTag}"
+            }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
-                    sh 'eval $(minikube docker-env -u)'
-                    // sh "export DB_HOST=${DB_HOST}"
-                    // sh "export DB_USER=${DB_USER}"
-                    // sh "export DB_PWD=${DB_PWD}"
-                    // sh "export DB_DATABASE=${DB_DATABASE}"
-                    sh "docker build . -t ${app_name}:${VERSION}"   
-                    sh "docker tag ${app_name}:${VERSION} ${dockerTag}:${VERSION}"  
-                }  
+                sh 'eval $(minikube docker-env -u)'
+                // sh "export DB_HOST=${DB_HOST}"
+                // sh "export DB_USER=${DB_USER}"
+                // sh "export DB_PWD=${DB_PWD}"
+                // sh "export DB_DATABASE=${DB_DATABASE}"
+                sh 'docker build . -t $app_name:$VERSION'   
+                sh 'docker tag $app_name:$VERSION $dockerTag:$VERSION'
             }   
         }
         stage('Deploy to ECR') {
+            environment {
+                awsuser = "${params.awsuser}"
+                dockerTag = "${params.dockerTag}"
+                VERSION = "${params.VERSION}"
+            }
             steps {
                 withAWS(endpointUrl: "http://${awsurl}", region: "${awsregion}", credentials: 'aws-cred') {
-                sh "aws ecr get-login-password | docker login --username ${awsuser} --password-stdin ${dockerTag}"
-                sh "docker push ${dockerTag}:${VERSION}"
+                sh 'aws ecr get-login-password | docker login --username $awsuser --password-stdin $dockerTag'
+                sh 'docker push $dockerTag:$VERSION'
             }
             }
         }
         stage('Deploy to Kubernetes') {
+            environment {
+                app_name = "${params.app_name}"
+                VERSION = "${params.VERSION}"
+                dockerTag = "${params.dockerTag}"
+                K8S_SERVER_URL = "${params.K8S_SERVER_URL}"
+                DB_HOST = "${params.DB_HOST}"
+                DB_DATABASE = "${params.DB_DATABASE}"
+                ENV = "${params.ENV}"
+            }
             steps {
                 kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
                     withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
-                        sh "helm upgrade --install ${app_name} ./helm/${app_name} --set image.pullPolicy=Always,image.repository=${dockerTag},image.tag=${VERSION},env.DB_HOST=${DB_HOST},env.DB_USER=${DB_USER},env.DB_PWD=${DB_PWD},env.DB_DATABASE=${DB_DATABASE} --namespace ${ENV} --create-namespace"
+                        sh 'helm upgrade --install $app_name ./helm/$app_name --set image.pullPolicy=Always , image.repository=$dockerTag , image.tag=$VERSION , env.DB_HOST=$DB_HOST , env.DB_USER=$DB_USER , env.DB_PWD=$DB_PWD , env.DB_DATABASE=$DB_DATABASE --namespace $ENV --create-namespace'
                     }
                 }
             }
