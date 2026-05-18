@@ -53,6 +53,24 @@ pipeline{
             }
             }
         }
+        stage('Init Database') {
+            environment {
+                DB_HOST_env = "${params.DB_HOST}"
+                DB_DATABASE_env = "${params.DB_DATABASE}"
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'PGPASSWORD')]) {
+                   sh '''
+                            DB_HOST=$(echo $DB_HOST_env | cut -d: -f1)
+                            DB_PORT=$(echo $DB_HOST_env | cut -d: -f2)
+                            for file in ./schema/*.sql; do
+                                echo 'Executing ${file}...'
+                                psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_DATABASE_env -f "$file"
+                            done
+                        '''
+                }
+            }
+        }
         stage('Deploy to Kubernetes') {
             environment {
                 app_name_env = "${params.app_name}"
