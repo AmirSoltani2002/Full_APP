@@ -64,7 +64,7 @@ pipeline{
                 ENV = "${params.ENV}"
             }
             steps {
-                withCredentials([file(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
+                withCredentials([string(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
                     kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
                         withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
                             sh 'helm upgrade --install $app_name ./helm/$app_name --set image.pullPolicy=Always,image.repository=$dockerTag,image.tag=$VERSION,env.DB_HOST=$DB_HOST,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE --namespace $ENV --create-namespace'
