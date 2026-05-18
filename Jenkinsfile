@@ -81,34 +81,38 @@ pipeline{
         NAMESPACE_env = "${params.ENV}"
     }
     steps {
+        withCredentials([string(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
+            kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
+                sh '''
+                    echo "Checking deployment rollout status..."
+                    # 1. Check if the deployment rollout succeeded
+                    if ! kubectl rollout status deployment/$APP_NAME_env --namespace $NAMESPACE_env --timeout=120s; then
+                        echo "ERROR: Deployment rollout failed or timed out."
+                        exit 1
+                    fi
+
+                    echo "Verifying individual pod phases..."
+                    # 2. Additional safety check: Ensure no pods are in a CrashLoopBackOff or Failed state
+                    POD_STATUSES=$(kubectl get pods -n $NAMESPACE_env -l app=$APP_NAME_env -o jsonpath='{.items[*].status.phase}')
+                    
+                    echo "Current pod phases: $POD_STATUSES"
+                    
+                    if echo "$POD_STATUSES" | grep -E -q "Failed|Unknown"; then
+                        echo "ERROR: One or more pods are in a Failed or Unknown state."
+                        kubectl get pods -n $NAMESPACE_env -l app=$APP_NAME_env
+                        kubectl logs -n $NAMESPACE_env" deployment/$APP_NAME_env" --tail=50
+                        exit 1
+                    fi
+
+                    # 3. Check for container-level restart loops (CrashLoopBackOff)
+                    RESTARTS=$(kubectl get pods -n $NAMESPACE_env -l app=$APP_NAME_env -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
+                    echo "Pod container restart counts: $RESTARTS"
+                    
+                    echo "SUCCESS: All pods are running correctly!"
+                '''
+            }
+        }
         // Use single quotes to pass variables safely to the shell environment
-        sh '''
-            echo "Checking deployment rollout status..."
-            # 1. Check if the deployment rollout succeeded
-            if ! kubectl rollout status deployment/$APP_NAME_env --namespace $NAMESPACE_env --timeout=120s; then
-                echo "ERROR: Deployment rollout failed or timed out."
-                exit 1
-            fi
-
-            echo "Verifying individual pod phases..."
-            # 2. Additional safety check: Ensure no pods are in a CrashLoopBackOff or Failed state
-            POD_STATUSES=$(kubectl get pods -n $NAMESPACE_env -l app=$APP_NAME_env -o jsonpath='{.items[*].status.phase}')
-            
-            echo "Current pod phases: $POD_STATUSES"
-            
-            if echo "$POD_STATUSES" | grep -E -q "Failed|Unknown"; then
-                echo "ERROR: One or more pods are in a Failed or Unknown state."
-                kubectl get pods -n $NAMESPACE_env -l app=$APP_NAME_env
-                kubectl logs -n $NAMESPACE_env" deployment/$APP_NAME_env" --tail=50
-                exit 1
-            fi
-
-            # 3. Check for container-level restart loops (CrashLoopBackOff)
-            RESTARTS=$(kubectl get pods -n $NAMESPACE_env -l app=$APP_NAME_env -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}')
-            echo "Pod container restart counts: $RESTARTS"
-            
-            echo "SUCCESS: All pods are running correctly!"
-        '''
     }
 }
     }
