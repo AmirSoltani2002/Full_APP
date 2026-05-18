@@ -182,9 +182,11 @@ volumes: []
   #     secretName: mysecret
   #     optional: false
 env:
-  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-service:3306/myapp"
-  SPRING_DATASOURCE_USERNAME: "admin"
-  SPRING_DATASOURCE_PASSWORD: "ExpenseApp123!"
+  DB_HOST: "localstack-service" 
+  DB_PORT: "4510"
+  DB_USER: "foo"
+  DB_PWD: "password"
+  DB_DATABASE: "mydb"
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
   # - name: foo
