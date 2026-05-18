@@ -12,7 +12,8 @@ pipeline{
         string(name: 'K8S_SERVER_URL', defaultValue: 'http://minikube:8443', description: 'Kubernetes API Server URL')
         string(name: 'DB_HOST', defaultValue: 'localhost.localstack.cloud:4566', description: 'Database Host')
         string(name: 'DB_DATABASE', defaultValue: 'mydb', description: 'Database Name')
-    }
+        string(name: 'DB_PORT', defaultValue: '4510', description: 'Database Port')
+    }  
     tools {
         nodejs 'nodejs'
         dockerTool 'docker'
@@ -57,15 +58,15 @@ pipeline{
             environment {
                 DB_HOST_env = "${params.DB_HOST}"
                 DB_DATABASE_env = "${params.DB_DATABASE}"
+                DB_PORT_env = "${params.DB_PORT}"
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'PGPASSWORD')]) {
                    sh '''
                             DB_HOST=$(echo $DB_HOST_env | cut -d: -f1)
-                            DB_PORT=$(echo $DB_HOST_env | cut -d: -f2)
                             for file in ./schema/*.sql; do
                                 echo 'Executing ${file}...'
-                                psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_DATABASE_env -f "$file"
+                                psql -h $DB_HOST -p $DB_PORT_env -U $DB_USER -d $DB_DATABASE_env -f "$file"
                             done
                         '''
                 }
@@ -80,11 +81,14 @@ pipeline{
                 DB_HOST_env = "${params.DB_HOST}"
                 DB_DATABASE_env = "${params.DB_DATABASE}"
                 ENV_env = "${params.ENV}"
+                DB_PORT_env = "${params.DB_PORT}"
             }
             steps {
                 withCredentials([string(credentialsId: 'k8s_liscence', variable: 'caCertificate_kube')]) {
                     kubeconfig(credentialsId: 'k8s_config', serverUrl: "${K8S_SERVER_URL}", caCertificate: "${caCertificate_kube}") {
                         withCredentials([usernamePassword(credentialsId: 'db_cred', usernameVariable: 'DB_USER', passwordVariable: 'DB_PWD')]) {
+                            sh 'export DB_HOST_TMP=$(echo $DB_HOST_env | cut -d: -f1)'
+                            sh 'export DB_HOST_env=$DB_HOST_TMP:$DB_PORT_env'
                             sh 'helm dependency update ./helm/$app_name_env'
                             sh 'helm upgrade --install $app_name_env ./helm/$app_name_env --set image.pullPolicy=Always,image.repository=$dockerTag_env,image.tag=$VERSION_env,env.DB_HOST=$DB_HOST_env,env.DB_USER=$DB_USER,env.DB_PWD=$DB_PWD,env.DB_DATABASE=$DB_DATABASE_env --namespace $ENV_env --create-namespace'
                         }
