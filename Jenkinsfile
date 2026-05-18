@@ -85,7 +85,7 @@ pipeline{
         sh '''
             echo "Checking deployment rollout status..."
             # 1. Check if the deployment rollout succeeded
-            if kubectl rollout status deployment/$APP_NAME --namespace $NAMESPACE --timeout=120s; then
+            if ! kubectl rollout status deployment/$APP_NAME --namespace $NAMESPACE --timeout=120s; then
                 echo "ERROR: Deployment rollout failed or timed out."
                 exit 1
             fi
